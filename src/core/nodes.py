@@ -1,12 +1,35 @@
 from typing import Literal
 
-from langchain_core.messages import HumanMessage
-from langgraph.graph import MessagesState
+from langchain_core.messages import AIMessage, HumanMessage
+from langgraph.graph import END, MessagesState
+from langgraph.types import Command
 
+from core.faq import FAQ_DATABASE
 from core.models import grader_model, response_model
-from core.prompts import GENERATE_PROMPT, REWRITE_PROMPT, GRADE_PROMPT
-from core.validation import GradeDocuments
+from core.prompts import GENERATE_PROMPT, REWRITE_PROMPT, GRADE_PROMPT, HANDOFF_PROMPT
+from core.validation import GradeDocuments, RouteDecision
 from core.tools import retriever_tool
+
+
+def handoff_agent(
+    state: MessagesState,
+) -> Command[Literal["generate_query_or_respond", "__end__"]]:
+    """Agent-recepcjonista: decyduje, czy odpowiedzieć od razu z bazy FAQ,
+    czy przekazać (handoff) zapytanie dalej do przepływu RAG."""
+    question = state["messages"][-1].content
+    faq_questions = "\n".join(f"- {q}" for q in FAQ_DATABASE)
+    prompt = HANDOFF_PROMPT.format(faq_questions=faq_questions, question=question)
+    decision = grader_model.with_structured_output(RouteDecision).invoke(
+        [{"role": "user", "content": prompt}]
+    )
+
+    if decision.route == "faq" and decision.matched_question in FAQ_DATABASE:
+        answer = FAQ_DATABASE[decision.matched_question]
+        print(f"  [handoff] → FAQ: '{decision.matched_question}'")
+        return Command(goto=END, update={"messages": [AIMessage(content=answer)]})
+
+    print("  [handoff] → RAG (generate_query_or_respond)")
+    return Command(goto="generate_query_or_respond")
 
 
 def generate_query_or_respond(state: MessagesState):

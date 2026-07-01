@@ -5,17 +5,19 @@ from core.nodes import (
     generate_answer,
     generate_query_or_respond,
     grade_documents,
+    handoff_agent,
     rewrite_question,
 )
 from core.tools import retriever_tool
 
 workflow = StateGraph(MessagesState)
+workflow.add_node(handoff_agent)
 workflow.add_node(generate_query_or_respond)
 workflow.add_node("retrieve", ToolNode([retriever_tool]))
 workflow.add_node(rewrite_question)
 workflow.add_node(generate_answer)
 
-workflow.add_edge(START, "generate_query_or_respond")
+workflow.add_edge(START, "handoff_agent")
 workflow.add_conditional_edges(
     "generate_query_or_respond",
     tools_condition,
