@@ -15,6 +15,11 @@ Zainstaluj `uv` (jeśli jeszcze go nie masz):
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+Windows:
+```bash
+powershell -c "irm https://astral.sh/uv/install.ps1 | more"
+```
+
 Utwórz środowisko wirtualne i zainstaluj zależności:
 
 ```bash
