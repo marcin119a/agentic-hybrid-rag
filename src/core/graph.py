@@ -1,5 +1,6 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
 
 from core.nodes import (
     generate_answer,
@@ -9,6 +10,8 @@ from core.nodes import (
     rewrite_question
 )
 from core.tools import retriever_tool
+
+checkpointer = MemorySaver()
 
 workflow = StateGraph(MessagesState)
 workflow.add_node(handoff_agent)
@@ -27,4 +30,4 @@ workflow.add_conditional_edges("retrieve", grade_documents)
 workflow.add_edge("generate_answer", END)
 workflow.add_edge("rewrite_question", "generate_query_or_respond")
 
-graph = workflow.compile()
+graph = workflow.compile(checkpointer=checkpointer)

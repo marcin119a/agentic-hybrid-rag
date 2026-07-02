@@ -11,6 +11,8 @@ from core.prompts import GENERATE_PROMPT, REWRITE_PROMPT, GRADE_PROMPT, HANDOFF_
 from core.validation import GradeDocuments, RouteDecision, TrainingAnswer
 from core.tools import retriever_tool
 from core.faq import FAQ_DATABASE
+from core.utils import _current_question
+
 
 
 def handoff_agent(
@@ -18,7 +20,7 @@ def handoff_agent(
 ) -> Command[Literal["generate_query_or_respond", "__end__"]]:
     """Agent-recepcjonista: decyduje, czy odpowiedzieć od razu z bazy FAQ,
     czy przekazać (handoff) zapytanie dalej do przepływu RAG."""
-    question = state["messages"][-1].content
+    question = _current_question(state)
     faq_questions = "\n".join(f"- {q}" for q in FAQ_DATABASE)
     prompt = HANDOFF_PROMPT.format(faq_questions=faq_questions, question=question)
     decision = grader_model.with_structured_output(RouteDecision).invoke(
@@ -41,12 +43,12 @@ def generate_query_or_respond(state: MessagesState):
     if response.tool_calls:
         print(f"  [workflow] → retrieve: {response.tool_calls[0]['args']}")
     else:
-        print(f"  [workflow] → odpowiedź bezpośrednia: {response.content[:120]}")
+        print(f"  [workflow] → odpowiedź bezpośrednia: {response.content[:20]}")
     return {"messages": [response]}
 
 
 def generate_answer(state: MessagesState):
-    question = state["messages"][0].content
+    question = _current_question(state)
     context = state["messages"][-1].content
     prompt = GENERATE_PROMPT.format(question=question, context=context)
     structured = response_model.with_structured_output(TrainingAnswer).invoke(
@@ -60,7 +62,7 @@ def generate_answer(state: MessagesState):
 
 def grade_documents(state: MessagesState) -> Literal["generate_answer", "rewrite_question"]:
     """Sprawdza, czy zwrócone fragmenty dokumentacji są istotne."""
-    question = state["messages"][0].content
+    question = _current_question(state)
     context = state["messages"][-1].content
     prompt = GRADE_PROMPT.format(question=question, context=context)
     response = grader_model.with_structured_output(GradeDocuments).invoke(
@@ -72,7 +74,7 @@ def grade_documents(state: MessagesState) -> Literal["generate_answer", "rewrite
 
 
 def rewrite_question(state: MessagesState):
-    question = state["messages"][0].content
+    question = _current_question(state)
     prompt = REWRITE_PROMPT.format(question=question)
     response = response_model.invoke([{"role": "user", "content": prompt}])
     print(f"  [workflow] rewrite → {response.content[:120]}")
