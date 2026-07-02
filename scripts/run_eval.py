@@ -80,8 +80,22 @@ def qa_correctness(question: str, expected: str, actual: str) -> dict:
     }
 
 
+def get_question(inputs: dict) -> str:
+    """Wyciąga pytanie z inputs, obsługując zarówno przykłady budowane ręcznie
+    (`{"question": ...}`), jak i te dodane w LangSmith bezpośrednio z trace'a
+    (`{"messages": [...]}`, czyli surowy input przekazany do graph.invoke)."""
+    if "question" in inputs:
+        return inputs["question"]
+    if "messages" in inputs and inputs["messages"]:
+        last = inputs["messages"][-1]
+        if isinstance(last, dict):
+            return last.get("content", "")
+        return getattr(last, "content", "")
+    raise KeyError("question")
+
+
 def qa_correctness_evaluator(run: Run, example: Example) -> dict:
-    question = example.inputs["question"]
+    question = get_question(example.inputs)
     expected = example.outputs.get("answer", "") if example.outputs else ""
     actual = run.outputs.get("answer", "") if run.outputs else ""
     result = qa_correctness(question, expected, actual)
@@ -90,7 +104,8 @@ def qa_correctness_evaluator(run: Run, example: Example) -> dict:
 
 def target(inputs: dict) -> dict:
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}
-    result = graph.invoke({"messages": [HumanMessage(content=inputs["question"])]}, config=config)
+    question = get_question(inputs)
+    result = graph.invoke({"messages": [HumanMessage(content=question)]}, config=config)
     answer = result["messages"][-1].content if result.get("messages") else ""
     return {"answer": answer}
 
