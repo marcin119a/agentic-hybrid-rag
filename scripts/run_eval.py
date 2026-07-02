@@ -10,7 +10,6 @@ from langsmith.schemas import Example, Run
 from langsmith import evaluate
 
 
-
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -80,8 +79,23 @@ def qa_correctness(question: str, expected: str, actual: str) -> dict:
     }
 
 
+def _extract_question(inputs: dict) -> str:
+    """Wyciąga treść pytania z przykładu datasetu.
+
+    Większość przykładów ma postać {"question": ...}, ale część mogła zostać
+    dodana ręcznie w LangSmith z podglądu run'a i ma postać {"messages": [...]}.
+    """
+    if "question" in inputs:
+        return inputs["question"]
+    messages = inputs.get("messages") or []
+    for message in reversed(messages):
+        if isinstance(message, dict) and message.get("type") == "human":
+            return message.get("content", "")
+    return ""
+
+
 def qa_correctness_evaluator(run: Run, example: Example) -> dict:
-    question = example.inputs["question"]
+    question = _extract_question(example.inputs)
     expected = example.outputs.get("answer", "") if example.outputs else ""
     actual = run.outputs.get("answer", "") if run.outputs else ""
     result = qa_correctness(question, expected, actual)
@@ -90,7 +104,8 @@ def qa_correctness_evaluator(run: Run, example: Example) -> dict:
 
 def target(inputs: dict) -> dict:
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}
-    result = graph.invoke({"messages": [HumanMessage(content=inputs["question"])]}, config=config)
+    question = _extract_question(inputs)
+    result = graph.invoke({"messages": [HumanMessage(content=question)]}, config=config)
     answer = result["messages"][-1].content if result.get("messages") else ""
     return {"answer": answer}
 
