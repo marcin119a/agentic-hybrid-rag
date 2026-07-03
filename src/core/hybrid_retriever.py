@@ -3,6 +3,7 @@
 Korpus BM25 budowany jest z tych samych chunków, które są już zaindeksowane
 w Chroma (vs.get()), więc oba retrievery zawsze widzą identyczny zbiór dokumentów.
 """
+
 import os
 
 from langchain_chroma import Chroma
@@ -24,7 +25,9 @@ def _load_indexed_documents() -> tuple[Chroma, list[Document]]:
             f"Indeks Chroma nie istnieje: {CHROMA_DIR}\n"
             "Uruchom najpierw: python scripts/build_index.py"
         )
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=settings.openai_api_key)
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small", api_key=settings.openai_api_key
+    )
     vs = Chroma(
         collection_name=COLLECTION_NAME,
         embedding_function=embeddings,
@@ -61,6 +64,7 @@ def get_hybrid_retriever(
         retrievers=[bm25_retriever, dense_retriever],
         weights=[bm25_weight, dense_weight],
     )
+
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FAISS_INDEX_DIR = os.path.join(_ROOT, "data", "indexes", "faiss_demo")

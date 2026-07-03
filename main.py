@@ -9,7 +9,10 @@ RECURSION_LIMIT = 15
 
 
 def main():
-    config = {"configurable": {"thread_id": str(uuid.uuid4())}, "recursion_limit": RECURSION_LIMIT}
+    config = {
+        "configurable": {"thread_id": str(uuid.uuid4())},
+        "recursion_limit": RECURSION_LIMIT,
+    }
     print("Asystent Sages. Wpisz 'exit' albo 'quit', żeby zakończyć.\n")
 
     while True:
@@ -20,9 +23,13 @@ def main():
             break
 
         try:
-            result = graph.invoke({"messages": [HumanMessage(content=question)]}, config=config)
+            result = graph.invoke(
+                {"messages": [HumanMessage(content=question)]}, config=config
+            )
         except GraphRecursionError:
-            print("Bot: Nie udało mi się dopasować szkolenia do tego pytania — spróbuj je inaczej sformułować.\n")
+            print(
+                "Bot: Nie udało mi się dopasować szkolenia do tego pytania — spróbuj je inaczej sformułować.\n"
+            )
             continue
 
         answer = result["messages"][-1].content

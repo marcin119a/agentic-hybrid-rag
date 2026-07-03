@@ -5,12 +5,17 @@ from langgraph.graph import END, MessagesState
 from langgraph.types import Command
 
 from core.models import grader_model, response_model
-from core.prompts import GENERATE_PROMPT, REWRITE_PROMPT, GRADE_PROMPT, HANDOFF_PROMPT, KEYWORD_PROMPT
+from core.prompts import (
+    GENERATE_PROMPT,
+    REWRITE_PROMPT,
+    GRADE_PROMPT,
+    HANDOFF_PROMPT,
+    KEYWORD_PROMPT,
+)
 from core.validation import GradeDocuments, RouteDecision, TrainingAnswer
 from core.tools import retriever_tool, search_faiss
 from core.faq import FAQ_DATABASE
 from core.utils import _current_question
-
 
 
 def handoff_agent(
@@ -34,7 +39,6 @@ def handoff_agent(
     return Command(goto="generate_query_or_respond")
 
 
-
 def generate_query_or_respond(state: MessagesState):
     """LLM decyduje: wywołać tool search_sages_trainings (RAG) albo odpowiedzieć od razu."""
     response = response_model.bind_tools([retriever_tool]).invoke(state["messages"])
@@ -55,7 +59,12 @@ def generate_answer(state: MessagesState):
     content = structured.model_dump_json()
     print(f"  [workflow] odpowiedź: {content[:20]}")
     trainings = [t.model_dump() for t in structured.trainings]
-    return {"messages": [AIMessage(content=content, additional_kwargs={"trainings": trainings})]}
+    return {
+        "messages": [
+            AIMessage(content=content, additional_kwargs={"trainings": trainings})
+        ]
+    }
+
 
 def _grade(question: str, context: str) -> str:
     prompt = GRADE_PROMPT.format(question=question, context=context)
@@ -64,7 +73,10 @@ def _grade(question: str, context: str) -> str:
     )
     return response.binary_score.strip().lower()
 
-def grade_documents(state: MessagesState) -> Literal["generate_answer", "retrieve_faiss"]:
+
+def grade_documents(
+    state: MessagesState,
+) -> Literal["generate_answer", "retrieve_faiss"]:
     """Sprawdza, czy zwrócone fragmenty dokumentacji są istotne."""
     question = _current_question(state)
     context = state["messages"][-1].content
@@ -80,23 +92,29 @@ def _extract_keywords(question: str) -> str:
     response = grader_model.invoke([{"role": "user", "content": prompt}])
     return response.content.strip()
 
+
 def retrieve_faiss(state: MessagesState):
     """Handoff: Chroma nie znalazła trafnego kontekstu — spróbuj lokalnego indeksu FAISS (open-source, bez klucza OpenAI).
     Zapytanie ograniczone do słów kluczowych, bez rewrite'u całego pytania."""
     question = _current_question(state)
     keywords = _extract_keywords(question)
-    print(f"  [workflow] → handoff: retrieve_faiss (lokalny indeks, HF embeddings) | słowa kluczowe: {keywords}")
+    print(
+        f"  [workflow] → handoff: retrieve_faiss (lokalny indeks, HF embeddings) | słowa kluczowe: {keywords}"
+    )
     result = search_faiss.invoke({"query": keywords})
     return {"messages": [AIMessage(content=result)]}
 
 
-def grade_faiss_documents(state: MessagesState) -> Literal["generate_answer", "rewrite_question"]:
+def grade_faiss_documents(
+    state: MessagesState,
+) -> Literal["generate_answer", "rewrite_question"]:
     """Ocenia kontekst z FAISS. To już ostatnia deska ratunku przed przeformułowaniem pytania."""
     question = _current_question(state)
     context = state["messages"][-1].content
     score = _grade(question, context)
     print(f"  [workflow] grader (faiss) → {score}")
     return "generate_answer" if score == "yes" else "rewrite_question"
+
 
 def rewrite_question(state: MessagesState):
     question = _current_question(state)

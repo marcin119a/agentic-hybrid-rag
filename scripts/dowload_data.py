@@ -13,7 +13,8 @@ DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "data" / "szkolenia.pa
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
         help=f"Ścieżka docelowa pliku (domyślnie: {DEFAULT_OUTPUT})",

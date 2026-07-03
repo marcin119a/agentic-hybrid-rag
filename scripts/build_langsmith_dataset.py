@@ -6,10 +6,11 @@ Użycie:
 
 Wymaga LANGSMITH_API_KEY (patrz hybrid_rag.config.settings / .env).
 """
+
 import argparse
 
 from langsmith import Client
-import os 
+import os
 import sys
 
 from run_eval import examples
@@ -18,7 +19,7 @@ from run_eval import examples
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
-from config import settings 
+from config import settings
 
 
 DEFAULT_DATASET_NAME = "sages-rag-qa-v2"
@@ -28,12 +29,16 @@ DEFAULT_DATASET_DESCRIPTION = (
 )
 
 
-def build_dataset(name: str = DEFAULT_DATASET_NAME, description: str = DEFAULT_DATASET_DESCRIPTION) -> None:
+def build_dataset(
+    name: str = DEFAULT_DATASET_NAME, description: str = DEFAULT_DATASET_DESCRIPTION
+) -> None:
     client = Client()
 
     if client.has_dataset(dataset_name=name):
         dataset = client.read_dataset(dataset_name=name)
-        print(f"Dataset '{name}' już istnieje (id={dataset.id}) — dodaję/aktualizuję przykłady.")
+        print(
+            f"Dataset '{name}' już istnieje (id={dataset.id}) — dodaję/aktualizuję przykłady."
+        )
     else:
         dataset = client.create_dataset(dataset_name=name, description=description)
         print(f"Utworzono dataset '{name}' (id={dataset.id}).")
@@ -47,8 +52,12 @@ def build_dataset(name: str = DEFAULT_DATASET_NAME, description: str = DEFAULT_D
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--name", default=DEFAULT_DATASET_NAME, help="Nazwa datasetu w LangSmith.")
-    parser.add_argument("--description", default=DEFAULT_DATASET_DESCRIPTION, help="Opis datasetu.")
+    parser.add_argument(
+        "--name", default=DEFAULT_DATASET_NAME, help="Nazwa datasetu w LangSmith."
+    )
+    parser.add_argument(
+        "--description", default=DEFAULT_DATASET_DESCRIPTION, help="Opis datasetu."
+    )
     args = parser.parse_args()
 
     build_dataset(name=args.name, description=args.description)

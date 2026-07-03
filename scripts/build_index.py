@@ -4,6 +4,7 @@ Usage:
     python scripts/build_index.py                           # build if index doesn't exist
     REBUILD_INDEX=true python scripts/build_index.py        # force rebuild
 """
+
 import os
 import sys
 import json

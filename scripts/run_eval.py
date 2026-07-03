@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-import uuid 
+import uuid
 
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
@@ -57,9 +57,11 @@ Odpowiedź asystenta: {actual}
 
 Podaj score od 0.0 do 1.0 (1.0 = odpowiedź w pełni poprawna / pokrywa oczekiwaną, 0.0 = całkowicie błędna lub nie na temat)."""
 
+
 class EvalScore(BaseModel):
     score: float = Field(description="Ocena 0.0–1.0")
     comment: str = Field(default="", description="Krótkie uzasadnienie oceny.")
+
 
 def predict(question: str) -> str:
     result = graph.invoke({"messages": [HumanMessage(content=question)]})
@@ -99,7 +101,11 @@ def qa_correctness_evaluator(run: Run, example: Example) -> dict:
     expected = example.outputs.get("answer", "") if example.outputs else ""
     actual = run.outputs.get("answer", "") if run.outputs else ""
     result = qa_correctness(question, expected, actual)
-    return {"key": "qa_correctness", "score": result["score"], "comment": result["comment"]}
+    return {
+        "key": "qa_correctness",
+        "score": result["score"],
+        "comment": result["comment"],
+    }
 
 
 def target(inputs: dict) -> dict:
@@ -109,10 +115,15 @@ def target(inputs: dict) -> dict:
     answer = result["messages"][-1].content if result.get("messages") else ""
     return {"answer": answer}
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", default=DEFAULT_DATASET_NAME, help="Nazwa datasetu w LangSmith.")
-    parser.add_argument("--prefix", default="sages-rag", help="Prefiks nazwy eksperymentu.")
+    parser.add_argument(
+        "--dataset", default=DEFAULT_DATASET_NAME, help="Nazwa datasetu w LangSmith."
+    )
+    parser.add_argument(
+        "--prefix", default="sages-rag", help="Prefiks nazwy eksperymentu."
+    )
     args = parser.parse_args()
 
     results = evaluate(
@@ -123,4 +134,6 @@ if __name__ == "__main__":
         description="Ewaluacja workflow Sages RAG (LLM-as-judge qa_correctness).",
     )
 
-    print(f"\nGotowe — wyniki eksperymentu dostępne w LangSmith (dataset: {args.dataset}).")
+    print(
+        f"\nGotowe — wyniki eksperymentu dostępne w LangSmith (dataset: {args.dataset})."
+    )

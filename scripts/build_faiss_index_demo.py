@@ -60,7 +60,9 @@ def _load_documents():
             doc.metadata["dni"] = row["dni"]
             doc.metadata["pdf_url"] = row["pdf_url"]
             matched += 1
-    print(f"Dopasowano metadane (nazwa/kategoria/pdf_url) dla {matched}/{len(docs)} plików")
+    print(
+        f"Dopasowano metadane (nazwa/kategoria/pdf_url) dla {matched}/{len(docs)} plików"
+    )
     return docs
 
 

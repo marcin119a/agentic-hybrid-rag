@@ -1,8 +1,11 @@
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
+
 class GradeDocuments(BaseModel):
-    binary_score: str = Field(description="Relevance score: 'yes' jeśli istotne, 'no' jeśli nie")
+    binary_score: str = Field(
+        description="Relevance score: 'yes' jeśli istotne, 'no' jeśli nie"
+    )
 
 
 class RouteDecision(BaseModel):
@@ -16,9 +19,11 @@ class RouteDecision(BaseModel):
         description="Dokładna treść pytania z bazy FAQ, które odpowiada pytaniu użytkownika (tylko gdy route='faq')",
     )
 
+
 class TrainingRecommendation(BaseModel):
     title: str = Field(description="Nazwa polecanego szkolenia")
     link: str = Field(description="Link do programu szkolenia (pdf_url z kontekstu)")
+
 
 class TrainingAnswer(BaseModel):
     answer: str = Field(

@@ -13,27 +13,32 @@ app = FastAPI(title="ChatBot API")
 
 
 class ChatRequest(BaseModel):
-   question: str
-   thread_id: str | None = None
+    question: str
+    thread_id: str | None = None
 
 
 class ChatResponse(BaseModel):
-   answer: str
-   thread_id: str
+    answer: str
+    thread_id: str
 
 
 @app.get("/health")
 async def health():
-   return {"status": "ok"}
+    return {"status": "ok"}
 
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     thread_id = request.thread_id or str(uuid.uuid4())
-    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": RECURSION_LIMIT}
+    config = {
+        "configurable": {"thread_id": thread_id},
+        "recursion_limit": RECURSION_LIMIT,
+    }
 
     try:
-        result = graph.invoke({"messages": [HumanMessage(content=request.question)]}, config=config)
+        result = graph.invoke(
+            {"messages": [HumanMessage(content=request.question)]}, config=config
+        )
     except GraphRecursionError:
         return ChatResponse(
             answer="Nie udało mi się dopasować szkolenia do tego pytania — spróbuj je inaczej sformułować.",

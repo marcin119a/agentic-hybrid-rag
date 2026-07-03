@@ -9,7 +9,7 @@ from core.nodes import (
     handoff_agent,
     grade_faiss_documents,
     retrieve_faiss,
-    rewrite_question
+    rewrite_question,
 )
 from core.tools import retriever_tool
 
