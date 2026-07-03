@@ -1,0 +1,29 @@
+services:
+  chroma:
+    image: chromadb/chroma:1.5.9
+    command: ["run", "--path", "/chroma/chroma", "--host", "0.0.0.0"]
+    volumes:
+      - ./data/indexes/chroma:/chroma/chroma
+    ports:
+      - "8001:8000"
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+    volumes:
+      - ./data/indexes/faiss_demo:/app/data/indexes/faiss_demo
+    depends_on:
+      - chroma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

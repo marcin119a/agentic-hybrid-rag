@@ -21,7 +21,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from config import settings
-from src.core.retriever import CHROMA_DIR, COLLECTION_NAME
+from src.core.retriever import CHROMA_DIR, CHROMA_HOST, COLLECTION_NAME, chroma_client_kwargs
 
 PARQUET_PATH = os.path.join(_ROOT, "data", "szkolenia.parquet")
 
@@ -67,14 +67,15 @@ def _rows_to_docs(rows: list[dict]) -> list[Document]:
 
 
 def build_index():
-    if settings.rebuild_index and os.path.isdir(CHROMA_DIR):
-        shutil.rmtree(CHROMA_DIR)
-        print("🔄 REBUILD_INDEX=true — usunięto stary indeks, budowanie od zera...")
+    if not CHROMA_HOST:
+        if settings.rebuild_index and os.path.isdir(CHROMA_DIR):
+            shutil.rmtree(CHROMA_DIR)
+            print("🔄 REBUILD_INDEX=true — usunięto stary indeks, budowanie od zera...")
 
-    if os.path.isdir(CHROMA_DIR) and os.listdir(CHROMA_DIR):
-        print("✅ Indeks już istnieje:", CHROMA_DIR)
-        print("   Ustaw REBUILD_INDEX=true w .env, aby przebudować.")
-        return
+        if os.path.isdir(CHROMA_DIR) and os.listdir(CHROMA_DIR):
+            print("✅ Indeks już istnieje:", CHROMA_DIR)
+            print("   Ustaw REBUILD_INDEX=true w .env, aby przebudować.")
+            return
 
     rows = _load_rows()
     docs = _rows_to_docs(rows)
@@ -89,14 +90,16 @@ def build_index():
         doc_splits = [Document(page_content="(brak dokumentów)", metadata={})]
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    os.makedirs(CHROMA_DIR, exist_ok=True)
+    if not CHROMA_HOST:
+        os.makedirs(CHROMA_DIR, exist_ok=True)
     Chroma.from_documents(
         doc_splits,
         embeddings,
         collection_name=COLLECTION_NAME,
-        persist_directory=CHROMA_DIR,
+        **chroma_client_kwargs(),
     )
-    print(f"✅ Indeks Chroma zbudowany: {len(doc_splits)} chunków → {CHROMA_DIR}")
+    target = f"{CHROMA_HOST}:{os.environ.get('CHROMA_PORT', '8000')}" if CHROMA_HOST else CHROMA_DIR
+    print(f"✅ Indeks Chroma zbudowany: {len(doc_splits)} chunków → {target}")
 
 
 if __name__ == "__main__":
