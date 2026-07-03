@@ -10,7 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 
 import core.nodes as nodes
-from core.models import TrainingAnswer, TrainingRecommendation
+from core.validation import TrainingAnswer, TrainingRecommendation
 
 
 def test_retriever_tool_formats_documents_from_fake_retriever(make_fake_retriever_tool):
@@ -36,7 +36,7 @@ def test_retrieve_faiss_uses_fake_search_tool(monkeypatch, make_state):
     fake_search_faiss = MagicMock()
     fake_search_faiss.invoke.return_value = fake_context
     monkeypatch.setattr(nodes, "search_faiss", fake_search_faiss)
-    monkeypatch.setattr(nodes, "extract_keywords", lambda question: "python")
+    monkeypatch.setattr(nodes, "_extract_keywords", lambda question: "python")
 
     state = make_state("Szukam szkolenia z Pythona")
     result = nodes.retrieve_faiss(state)
