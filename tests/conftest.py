@@ -8,7 +8,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.tools import create_retriever_tool
 
-
 DOCUMENT_PROMPT = PromptTemplate.from_template(
     "{page_content}\nLink do programu szkolenia: {pdf_url}"
 )
