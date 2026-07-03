@@ -21,14 +21,19 @@ RUN uv pip install --system --no-cache-dir -r requirements.txt
 
 COPY pyproject.toml pyproject.toml
 
-RUN uv pip install --system -e . --no-deps
 
 COPY src/ src/
+
+RUN uv pip install --system -e . --no-deps
 
 COPY data/indexes/chroma data/indexes/chroma 
 COPY data/indexes/faiss_demo data/indexes/faiss_demo
 
+COPY data/programy data/programy
+
 COPY api.py api.py
+
+COPY config.py config.py
 
 EXPOSE 8000
 
