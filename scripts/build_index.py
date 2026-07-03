@@ -21,7 +21,12 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from config import settings
-from src.core.retriever import CHROMA_DIR, CHROMA_HOST, COLLECTION_NAME, chroma_client_kwargs
+from src.core.retriever import (
+    CHROMA_DIR,
+    CHROMA_HOST,
+    COLLECTION_NAME,
+    chroma_client_kwargs,
+)
 
 PARQUET_PATH = os.path.join(_ROOT, "data", "szkolenia.parquet")
 
@@ -98,7 +103,11 @@ def build_index():
         collection_name=COLLECTION_NAME,
         **chroma_client_kwargs(),
     )
-    target = f"{CHROMA_HOST}:{os.environ.get('CHROMA_PORT', '8000')}" if CHROMA_HOST else CHROMA_DIR
+    target = (
+        f"{CHROMA_HOST}:{os.environ.get('CHROMA_PORT', '8000')}"
+        if CHROMA_HOST
+        else CHROMA_DIR
+    )
     print(f"✅ Indeks Chroma zbudowany: {len(doc_splits)} chunków → {target}")
 
 

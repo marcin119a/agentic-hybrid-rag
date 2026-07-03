@@ -22,7 +22,9 @@ def chroma_client_kwargs() -> dict:
 
 
 def get_retriever():
-    if not CHROMA_HOST and (not os.path.isdir(CHROMA_DIR) or not os.listdir(CHROMA_DIR)):
+    if not CHROMA_HOST and (
+        not os.path.isdir(CHROMA_DIR) or not os.listdir(CHROMA_DIR)
+    ):
         raise RuntimeError(
             f"Indeks Chroma nie istnieje: {CHROMA_DIR}\n"
             "Uruchom najpierw: python scripts/build_index.py"
