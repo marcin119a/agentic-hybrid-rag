@@ -16,11 +16,18 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 
 from config import settings
-from core.retriever import CHROMA_DIR, COLLECTION_NAME
+from core.retriever import (
+    CHROMA_DIR,
+    CHROMA_HOST,
+    COLLECTION_NAME,
+    chroma_client_kwargs,
+)
 
 
 def _load_indexed_documents() -> tuple[Chroma, list[Document]]:
-    if not os.path.isdir(CHROMA_DIR) or not os.listdir(CHROMA_DIR):
+    if not CHROMA_HOST and (
+        not os.path.isdir(CHROMA_DIR) or not os.listdir(CHROMA_DIR)
+    ):
         raise RuntimeError(
             f"Indeks Chroma nie istnieje: {CHROMA_DIR}\n"
             "Uruchom najpierw: python scripts/build_index.py"
@@ -31,7 +38,7 @@ def _load_indexed_documents() -> tuple[Chroma, list[Document]]:
     vs = Chroma(
         collection_name=COLLECTION_NAME,
         embedding_function=embeddings,
-        persist_directory=CHROMA_DIR,
+        **chroma_client_kwargs(),
     )
     stored = vs.get()
     docs = [
